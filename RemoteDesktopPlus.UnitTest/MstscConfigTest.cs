@@ -95,9 +95,10 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 			TestMstscConfig config = new TestMstscConfig();
 			config.Update( m_filePath, new MstscSettings() );
 
-			Assert.AreEqual( "key:s:value\r\n",
-				System.Text.Encoding.Unicode.GetString(
-					File.ReadAllBytes( m_filePath ) ) );
+            using (var sr = new StreamReader( m_filePath, System.Text.Encoding.Unicode ))
+            {
+                Assert.AreEqual( "key:s:value\r\n", sr.ReadToEnd() );
+            }
 		}
 
 		[Test]
