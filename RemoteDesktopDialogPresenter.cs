@@ -4,13 +4,7 @@ using System.Linq;
 
 namespace MillerX.RemoteDesktopPlus
 {
-	public enum AppCmd
-	{
-		LoadInitData,
-		MstscConnect,
-	}
-
-	public class DataEventArgs : EventArgs
+	class DataEventArgs : EventArgs
 	{
 		public object Data { get; private set; }
 		public DataEventArgs( object data )
@@ -19,17 +13,11 @@ namespace MillerX.RemoteDesktopPlus
 		}
 	}
 
-	public class RemoteDesktopDialogPresenter : CmdThread<AppCmd>
+	class RemoteDesktopDialogPresenter
 	{
-		/// <summary>
-		/// List of computers we have connected to recently.
-		/// </summary>
 		private RecentComputerList m_RecentComputerList = new RecentComputerList();
 
-		/// <summary>
-		/// Runs mstsc (Remote Desktop) and waits for it to complete.
-		/// </summary>
-		private MstscApp m_MstscApp = new MstscApp();
+        protected RecentComputerList RecentComputerList { get { return m_RecentComputerList; } }
 
 		public event EventHandler<DataEventArgs> ComputerListUpdated;
 		protected void OnComputerListUpdated( )
@@ -42,26 +30,14 @@ namespace MillerX.RemoteDesktopPlus
 			}
 		}
 
-		public event EventHandler MstscAppConnected;
+		public event EventHandler MstscAppExited;
+        protected void OnMstscAppExited( )
+        {
+            if ( MstscAppExited != null )
+                MstscAppExited( this, EventArgs.Empty );
+        }
 
-		/// <summary>
-		/// Message dispatcher.
-		/// </summary>
-		protected override void CmdProc( AppCmd command, object[] cparams )
-		{
-			switch ( command )
-			{
-				case AppCmd.LoadInitData:
-					LoadInitData(); break;
-				case AppCmd.MstscConnect:
-					MstscConnect( (MstscSettings) cparams[0] ); break;
-			}
-		}
-
-		/// <summary>
-		/// Loads all initialization data and signals the UI with that data.
-		/// </summary>
-		private void LoadInitData( )
+		public void LoadInitData( )
 		{
 			var config = new ConfigFileSerializer();
 			config.Read();
@@ -71,29 +47,62 @@ namespace MillerX.RemoteDesktopPlus
 			OnComputerListUpdated();
 		}
 
-		/// <summary>
-		/// Loads the recent computer list from our settings file or the MSTSC registry.
-		/// </summary>
 		private RecentComputerList LoadRecentComputerList( )
 		{
 			// Normally we read the computer list from our own setting file but on the first run
 			// we will need import it from the registry.
 			var listFile = new ComputerListFile();
 			var computers = listFile.Read();
-			if ( computers.Count == 0 )
-				computers = listFile.ReadFromRegistry();
+            if ( computers.Count == 0 )
+            {
+                Logger.LogString( "Computer list file not found.  Reading from registry." );
+                computers = listFile.ReadFromRegistry();
+            }
 			return computers;
 		}
 
-		private void MstscConnect( MstscSettings settings )
-		{
-#if DEBUG
-			m_MstscApp.TestMode = true;
-#endif
-			m_MstscApp.Connect( settings );
+        public ComputerName BuildComputerName( string computerName, string aliasName )
+        {
+            ComputerName computer = m_RecentComputerList.Find( computerName );
+            if ( computer == null )
+            {
+                computer = new ComputerName( computerName, aliasName );
 
-			if ( MstscAppConnected != null )
-				MstscAppConnected( this, EventArgs.Empty );
+                // If the alias has an IP address then we probably mistyped and intended for the
+                // IP address to go in the computer combo box.
+                if ( computer.Alias != null && ComputerName.IsIpAddress( computer.Alias ) )
+                    computer = new ComputerName( computer.Alias, computer.Computer );
+            }
+            else if ( computer.EqualsAlias( computerName ) )
+            {
+                // There is some ambiguity in the UI.  If you have an alias in the Computer Name drop-down
+                // and a name in the Alias textbox then don't do anything with the Alias textbox.
+            }
+            else if ( aliasName != "" )
+            {
+                // We still set the alias in-case we are trying to change the computer name the alias is associated with.
+                computer.Alias = aliasName;
+            }
+
+            return computer;
+        }
+
+		public void MstscConnect( MstscSettings settings )
+		{
+            var mstscApp = new MstscApp();
+#if DEBUG
+            mstscApp.TestMode = true;
+#endif
+            try
+            {
+                mstscApp.Run( settings );
+            }
+            catch ( Exception ex )
+            {
+                Logger.LogException( ex );
+            }
+
+            OnMstscAppExited();
 
 			// It is important to read before we write in case we have two instances of RemoteDesktopPlus open.
 			// However RemoteDesktop doesn't have special logic for adding an IP address to the list like we
@@ -110,15 +119,22 @@ namespace MillerX.RemoteDesktopPlus
 			OnComputerListUpdated();
 		}
 
-		/// <summary>
-		/// The computer list has been updated by an external application.  Load and display it.
-		/// </summary>
-		public void LoadUpdatedComputerList( )
-		{
-			// Get updates from any other RDP instance.
-			m_RecentComputerList = LoadRecentComputerList();
+        public void EditComputerList( )
+        {
+            var process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = "notepad.exe";
+            process.StartInfo.Arguments = ComputerListFile.GetComputerListFilePath();
+            process.Start();
 
-			OnComputerListUpdated();
-		}
-	}
+            process.WaitForExit();
+
+            m_RecentComputerList = LoadRecentComputerList();
+            OnComputerListUpdated();
+        }
+
+        public void ResetRDWindowPos( )
+        {
+            MstscConfig.BuildMstscConfig().ResetWindowsPos();
+        }
+    }
 }

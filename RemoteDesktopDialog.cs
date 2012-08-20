@@ -8,31 +8,27 @@ using System.Threading;
 
 namespace MillerX.RemoteDesktopPlus
 {
-	public partial class RemoteDesktopDialog : Form
+	partial class RemoteDesktopDialog : Form
 	{
-		private RemoteDesktopDialogPresenter m_Presenter = new RemoteDesktopDialogPresenter();
-		private AdvancedTools m_AdvancedTools = new AdvancedTools();
+        private RemoteDesktopDialogPresenter m_Presenter = new RemoteDesktopDialogPresenter();
 
 		public RemoteDesktopDialog( )
 		{
 			InitializeComponent();
 			this.Icon = Properties.Resources.RemoteDesktop;
-			m_CancelButton.Click += (s, e) => { Close(); };
-			m_AdvancedTools.ComputerListUpdated += (s, e) => { m_Presenter.Execute( AppCmd.LoadInitData ); };
-			m_Presenter.ComputerListUpdated += new EventHandler<DataEventArgs>( m_Presenter_ComputerListUpdated );
-			m_Presenter.MstscAppConnected += new EventHandler( m_Presenter_MstscAppConnected );
+            m_AliasComboBox.ForeColor = UIItems.AliasColor;
 
-			m_Presenter.Start();
+			m_Presenter.ComputerListUpdated += new EventHandler<DataEventArgs>( m_Presenter_ComputerListUpdated );
+			m_Presenter.MstscAppExited += new EventHandler( m_Presenter_MstscAppExited );
+
 			this.Enabled = false;
-			m_Presenter.Execute( AppCmd.LoadInitData );
+            ThreadPool.QueueUserWorkItem( (o) => m_Presenter.LoadInitData() );
 		}
 
 		protected override void Dispose( bool disposing )
 		{
 			if ( disposing )
 			{
-				m_Presenter.Dispose();
-
 				if ( components != null )
 					components.Dispose();
 			}
@@ -48,9 +44,58 @@ namespace MillerX.RemoteDesktopPlus
 				return;
 			}
 
-			m_ComputerSettingsPanel.SetRecentComputerList( (RecentComputerList) e.Data );
+            var computers = (RecentComputerList) e.Data;
+
+            m_ComputerComboBox.Populate( computers );
+			// Put the first item in the combo's textbox
+			if ( m_ComputerComboBox.Items.Count > 0 )
+				m_ComputerComboBox.SelectedIndex = 0;
+
+			m_AliasComboBox.BeginUpdate();
+			m_AliasComboBox.Items.Clear();
+			m_AliasComboBox.Items.AddRange( computers.GetAliases().ToArray() );
+			m_AliasComboBox.MaxDropDownItems = Config.MaxComboItems;
+			m_AliasComboBox.EndUpdate();
+
+			// Alias has been applied so can clear the textbox.
+			m_AliasComboBox.Text = "";
+
 			this.Enabled = true;
 		}
+
+        private void m_ComputerComboBox_ComputerChanged( object sender, DataEventArgs e )
+        {
+            m_LogoPictureBox.AdminMode = ((ComputerName) e.Data).AdminMode;
+            
+            var computer = m_ComputerComboBox.SelectedItem as ComputerName;
+            m_ExpandAliasButton.Enabled = (computer != null) && !string.IsNullOrEmpty( computer.Alias );
+        }
+
+        private void m_ComputerComboBox_SelectedIndexChanged( object sender, EventArgs e )
+        {
+            // Alias is no longer valid if we selected another computer.
+            m_AliasComboBox.Text = "";
+        }
+
+        private void m_ExpandAliasButton_Click( object sender, EventArgs e )
+        {
+            if ( m_ComputerComboBox.SelectedItem != null )
+            {
+                var computer = (ComputerName) m_ComputerComboBox.SelectedItem;
+                if ( m_AliasComboBox.Text == "" )
+                {
+                    // Expand
+                    m_ComputerComboBox.Text = computer.Computer;
+                    m_AliasComboBox.Text = computer.Alias;
+                }
+                else
+                {
+                    // Collapse
+                    m_ComputerComboBox.Text = computer.Alias;
+                    m_AliasComboBox.Text = "";
+                }
+            }
+        }
 
 		private void m_ConnectButton_Click( object sender, EventArgs e )
 		{
@@ -58,14 +103,17 @@ namespace MillerX.RemoteDesktopPlus
 			{
 				this.Enabled = false;
 
-				var settings = new MstscSettings();
-				foreach ( object control in Controls )
-				{
-					if ( control is ISettingsControl )
-						(control as ISettingsControl).OnConnect( settings );
-				}
+                // Trim spaces from copy-and-paste operations.
+                m_ComputerComboBox.Text = m_ComputerComboBox.Text.Trim();
+                m_AliasComboBox.Text = m_AliasComboBox.Text.Trim();
 
-				m_Presenter.Execute( AppCmd.MstscConnect, settings );
+                var settings = new MstscSettings();
+                settings.Computer = m_Presenter.BuildComputerName( m_ComputerComboBox.Text, m_AliasComboBox.Text );
+                settings.Computer.AdminMode = m_LogoPictureBox.AdminMode;
+                settings.AudioMode = m_AudioButton.AudioMode;
+                settings.SharedDrives = m_DrivesButton.GetDrives();
+
+                ThreadPool.QueueUserWorkItem( ( o ) => m_Presenter.MstscConnect( settings ) );
 
 				// If we hide the window right away, sometimes it does not get removed from the taskbar.
 				// To avoid this we wait a few secs before hiding the window.
@@ -85,11 +133,11 @@ namespace MillerX.RemoteDesktopPlus
 			MessageBox.Show( message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error );
 		}
 
-		private void m_Presenter_MstscAppConnected( object sender, EventArgs e )
+		private void m_Presenter_MstscAppExited( object sender, EventArgs e )
 		{
 			if ( this.InvokeRequired )
 			{
-				this.BeginInvoke( new EventHandler( m_Presenter_MstscAppConnected ), sender, e );
+                this.BeginInvoke( new EventHandler( m_Presenter_MstscAppExited ), sender, e );
 				return;
 			}
 
@@ -106,14 +154,14 @@ namespace MillerX.RemoteDesktopPlus
 			m_Timer.Enabled = false;
 		}
 
-		private void m_ctxAdvOpenComputerList_Click( object sender, EventArgs e )
+		private void m_ctxAdvEditComputerList_Click( object sender, EventArgs e )
 		{
-			m_AdvancedTools.OpenComputerListFile();
+            ThreadPool.QueueUserWorkItem( (o) => m_Presenter.EditComputerList() );
 		}
 
 		private void m_ctxAdvResetWindowPos_Click( object sender, EventArgs e )
 		{
-			m_AdvancedTools.ResetWindowPos();
+            m_Presenter.ResetRDWindowPos();
 		}
 
 		private void m_ctxAbout_Click( object sender, EventArgs e )
@@ -125,9 +173,9 @@ namespace MillerX.RemoteDesktopPlus
 		}
 	}
 
-	// Interface for controls that let the user edit MSTSC settings.
-	public interface ISettingsControl
-	{
-		void OnConnect( MstscSettings settings );
-	}
+    class UIItems
+    {
+        public static readonly System.Drawing.Color AliasColor = System.Drawing.Color.DarkRed;
+        public static System.Drawing.Brush AliasBrush = System.Drawing.Brushes.DarkRed;
+    }
 }

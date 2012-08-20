@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 
 namespace MillerX.RemoteDesktopPlus
 {
-	public static class Config
+	static class Config
 	{
 		public static int MaxComputerCount = 128;
 		public static int MaxIpAddressCount = 5;
 		public static int MaxComboItems = 10;
+        public static Size ResetSize = new Size( 1280, 1024 );
+        public static string ResetPosition = "0,1,-1280,150,-80,950";
+        public static int ResetBpp = 16;
 	}
 
-	public class ConfigFileSerializer
+	class ConfigFileSerializer
 	{
 		public static string GetConfigFilePath( )
 		{
@@ -52,7 +56,7 @@ namespace MillerX.RemoteDesktopPlus
 				{
 					fieldInfo.SetValue( null, value );
 				}
-				else if ( fieldInfo.FieldType == typeof(int) )
+				else if ( fieldInfo.FieldType == typeof( int ) )
 				{
 					int intValue = 0;
 					if ( !int.TryParse( value, out intValue ) )
@@ -74,11 +78,24 @@ namespace MillerX.RemoteDesktopPlus
 
 					fieldInfo.SetValue( null, boolValue );
 				}
-				else
-				{
-					Logger.LogString( string.Format( "Do not know how to parse field type.  Line {0}.  \"{1}\"", lineNum, line ) );
-					continue;
-				}
+                else if ( fieldInfo.FieldType == typeof( Size ) )
+                {
+                    try
+                    {
+                        var converter = new SizeConverter();
+                        var sizeValue = (Size) converter.ConvertFromString( value );
+                        fieldInfo.SetValue( null, sizeValue );
+                    }
+                    catch ( Exception ex )
+                    {
+                        Logger.LogException( ex );
+                    }
+                }
+                else
+                {
+                    Logger.LogString( string.Format( "Do not know how to parse field type.  Line {0}.  \"{1}\"", lineNum, line ) );
+                    continue;
+                }
 			}
 		}
 

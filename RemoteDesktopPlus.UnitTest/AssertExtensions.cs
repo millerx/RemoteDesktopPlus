@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace MillerX.RemoteDesktopPlus.UnitTest
 {
-	public static class Assert2
+	static class Assert2
 	{
 		public static void Throws( Type exceptionType, Action a )
 		{

@@ -59,7 +59,7 @@ namespace ShellLib
 	[ComImport]
 	[InterfaceType( ComInterfaceType.InterfaceIsIUnknown )]
 	[Guid( "000214E6-0000-0000-C000-000000000046" )]
-	public interface IShellFolder
+	interface IShellFolder
 	{
 		[PreserveSig]
 		Int32 ParseDisplayName(
@@ -138,7 +138,7 @@ namespace ShellLib
 	//-------------------------------------------------------------------------
 
 	[StructLayout( LayoutKind.Explicit )]
-	public struct STRRET
+	struct STRRET
 	{
 		[FieldOffset( 0 )]
 		public UInt32 uType;
@@ -161,7 +161,7 @@ namespace ShellLib
 	[ComImport]
 	[InterfaceType( ComInterfaceType.InterfaceIsIUnknown )]
 	[Guid( "00000002-0000-0000-C000-000000000046" )]
-	public interface IMalloc
+	interface IMalloc
 	{
 		[PreserveSig]
 		IntPtr Alloc(
@@ -190,7 +190,7 @@ namespace ShellLib
 
 	//-------------------------------------------------------------------------
 
-	public enum SHGNO
+	enum SHGNO
 	{
 		SHGDN_NORMAL = 0x0000,
 		SHGDN_INFOLDER = 0x0001,

@@ -6,7 +6,7 @@ using Microsoft.Win32;
 
 namespace MillerX.RemoteDesktopPlus
 {
-	public class ComputerListFile
+	class ComputerListFile
 	{
 		public static string GetComputerListFilePath( )
 		{

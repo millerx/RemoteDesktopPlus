@@ -9,7 +9,7 @@ namespace MillerX.RemoteDesktopPlus
 	/// <summary>
 	/// Logs events to a text file.
 	/// </summary>
-	public class Logger
+	class Logger
 	{
 		/// <summary>
 		/// Logs the current computer list.

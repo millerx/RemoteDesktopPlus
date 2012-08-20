@@ -8,75 +8,53 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 	[TestFixture]
 	public class ComputerNameTest
 	{
-		/// <summary>
-		/// Tests unaliasing the computer name.
-		/// </summary>
-		[Test]
-		public void BuildComputer( )
-		{
-			ComputerName computer;
+        [Test]
+        public void Ctor( )
+        {
+            Assert.IsFalse( new ComputerName( "computer", "alias" ).AdminMode );
+            Assert.IsNull( new ComputerName( "computer", "" ).Alias );
+            Assert.IsNull( new ComputerName( "computer", null ).Alias );
+        }
 
-			RecentComputerList computerList = new RecentComputerList();
-			computerList.Add( new ComputerName( "1.1.1.1", "alias" ) );
+        [Test]
+        public void EqualsCaseInsensitive( )
+        {
+            var computer = new ComputerName( "foo", "bar" );
 
-			// Unalias
-			computer = ComputerName.BuildComputerName( "alias", "", computerList );
-			Assert.AreEqual( new ComputerName( "1.1.1.1", "alias" ), computer );
+            Assert.IsTrue( computer.EqualsComputer( "foo" ) );
+            Assert.IsTrue( computer.EqualsComputer( "FOO" ) );
+            Assert.IsFalse( computer.EqualsComputer( "bar" ) );
 
-			// Retrieve computer and alias given just the computer name.
-			computer = ComputerName.BuildComputerName( "1.1.1.1", "", computerList );
-			Assert.AreEqual( new ComputerName( "1.1.1.1", "alias" ), computer );
-
-			// Change alias on an existing item.
-			computer = ComputerName.BuildComputerName( "1.1.1.1", "foobar", computerList );
-			Assert.AreEqual( new ComputerName( "1.1.1.1", "foobar" ), computer );
-
-			// Create a new value if not found in the RecentComputerList.
-			computer = ComputerName.BuildComputerName( "2.2.2.2", "OtherAlias", computerList );
-			Assert.AreEqual( new ComputerName( "2.2.2.2", "OtherAlias" ), computer );
-		}
+            Assert.IsTrue( computer.EqualsAlias( "bar" ) );
+            Assert.IsTrue( computer.EqualsAlias( "BAR" ) );
+            Assert.IsFalse( computer.EqualsAlias( "foo" ) );
+        }
 
 		[Test]
 		public void Equals( )
 		{
-			var name = new ComputerName( "1.1.1.1", "work", true );
+			var computer = new ComputerName( "1.1.1.1", "work", true );
 
-			Assert.IsTrue(  name.Equals( new ComputerName( "1.1.1.1", "work", true )));
-			Assert.IsFalse( name.Equals( new ComputerName( "2.2.2.2", "work", true )));
-			Assert.IsFalse( name.Equals( new ComputerName( "1.1.1.1", "home", true )));
-			Assert.IsFalse( name.Equals( new ComputerName( "1.1.1.1", "work", false )));
+			Assert.IsTrue(  computer.Equals( new ComputerName( "1.1.1.1", "work", true )));
+			Assert.IsFalse( computer.Equals( new ComputerName( "2.2.2.2", "work", true )));
+			Assert.IsFalse( computer.Equals( new ComputerName( "1.1.1.1", "home", true )));
+			Assert.IsFalse( computer.Equals( new ComputerName( "1.1.1.1", "work", false )));
 		}
 
-		/// <summary>
-		/// There is some ambiguity in the UI.  If you have an alias in the Computer Name drop-down
-		/// and a name in the Alias textbox then don't do anything with the Alias textbox.
-		/// </summary>
-		[Test]
-		public void DontAliasAnAlias( )
-		{
-			RecentComputerList computerList = new RecentComputerList();
-			computerList.Add( new ComputerName( "1.1.1.1", "MyAlias" ) );
+        [Test]
+        public void TestToString( )
+        {
+            Assert.AreEqual( "computer", new ComputerName( "computer", null ).ToString() );
+            Assert.AreEqual( "alias", new ComputerName( "computer", "alias" ).ToString() );
+        }
 
-			ComputerName computer = ComputerName.BuildComputerName( "MyAlias", "OtherAlias", computerList );
-			Assert.AreEqual( new ComputerName( "1.1.1.1", "MyAlias" ), computer );
-		}
-
-		/// <summary>
-		/// Tests that if we put an IP address as an alias, RDP assumes user error and flips the computer name and alias.
-		/// </summary>
-		[Test]
-		public void FlipComputerNameAndAlias( )
-		{
-			ComputerName computer;
-			RecentComputerList computerList = new RecentComputerList();
-
-			// 1.1.1.1 was intended to be the computer name but we mistyped.
-			computer = ComputerName.BuildComputerName( "alias", "1.1.1.1", computerList );
-			Assert.AreEqual( new ComputerName( "1.1.1.1", "alias" ), computer );
-
-			// Do we handle not having an alias.
-			computer = ComputerName.BuildComputerName( "chrismillerpc", "", computerList );
-			Assert.AreEqual( new ComputerName( "chrismillerpc", null ), computer );
-		}
+        [Test]
+        public void IsIpAddress( )
+        {
+            Assert.IsTrue( ComputerName.IsIpAddress( "1.1.1.1" ) );
+            Assert.IsFalse( ComputerName.IsIpAddress( "computer" ) );
+            Assert.IsFalse( ComputerName.IsIpAddress( "1.1" ) );
+            Assert.IsFalse( ComputerName.IsIpAddress( "1.1.1.a" ) );
+        }
 	}
 }

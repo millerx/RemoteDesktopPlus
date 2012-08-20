@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -9,95 +10,76 @@ namespace MillerX.RemoteDesktopPlus
 	/// <summary>
 	/// Starts up and waits for Mstsc.exe (Microsoft Terminal Services Client (ie Remote Desktop).
 	/// </summary>
-	public class MstscApp
+	class MstscApp
 	{
-		private MstscSettings m_Settings = null;
-
 		public static readonly string MstscExecutablePath = System.IO.Path.Combine(
 			System.Environment.GetFolderPath( System.Environment.SpecialFolder.System ),
 			"mstsc.exe" );
 
 		public bool TestMode { get; set; }
 
-		public event EventHandler<MstscEventArgs> Exited;
-
 		public MstscApp( )
 		{
 			this.TestMode = false;
 		}
 
-		public void Connect( MstscSettings settings )
+		public void Run( MstscSettings settings )
 		{
-			m_Settings = settings.Clone();
-
-			Process process = new Process();
-			try
+			using ( var process = new Process() )
 			{
-				UpdateConnectionFile( m_Settings );
+                UpdateMstscConfig( settings );
 
-				SetStartInfo( process.StartInfo );
-				StartProcess( process );
+                SetStartInfo( process.StartInfo, settings );
+                process.Start();
 
-				// Wait for the process to exit for real this time.
-				WaitForExit( process );
+                process.WaitForExit();
 			}
-			catch ( Exception ex )
-			{
-				Trace.TraceError( ex.ToString() );
-			}
-			finally
-			{ process.Dispose(); }
-
-			if ( Exited != null )
-				Exited( this, new MstscEventArgs( m_Settings ) );
 		}
 
-		private void SetStartInfo( ProcessStartInfo startInfo )
+        private void UpdateMstscConfig( MstscSettings settings )
+        {
+            var config = MstscConfig.BuildMstscConfig();
+            try
+            {
+                if ( this.TestMode )
+                {
+                    var lines = File.ReadAllLines( MstscConfig.GetRdpConfigFilename() );
+                    var stream = new MemoryStream();
+                    config.Update( lines, settings, stream );
+                    var reader = new StreamReader( new MemoryStream( stream.ToArray() ) );
+                    Console.WriteLine( reader.ReadToEnd() );
+                }
+                else
+                    config.Update( settings );
+            }
+            catch ( Exception ex )
+            {
+                Logger.LogException( ex );
+            }
+            finally { config.Dispose(); }
+        }
+
+		protected void SetStartInfo( ProcessStartInfo startInfo, MstscSettings settings )
 		{
 			if ( this.TestMode )
 			{
 				startInfo.FileName = "notepad.exe";
 				startInfo.Arguments = "";
+                Console.WriteLine( GetArgumentsString( settings ) );
 			}
 			else
 			{
 				startInfo.FileName = MstscExecutablePath;
-				startInfo.Arguments = GetArgumentsString( m_Settings );
+				startInfo.Arguments = GetArgumentsString( settings );
 			}
 		}
 
 		private static string GetArgumentsString( MstscSettings settings )
 		{
-			return "/v:" + settings.Computer.Computer +
-				(settings.Computer.AdminMode ? " /console /admin" : "");
-		}
-
-		protected virtual void UpdateConnectionFile( MstscSettings settings )
-		{
-			using ( MstscConfig config = MstscConfig.BuildMstscConfig() )
-			{
-				config.Update( settings );
-			}
-		}
-
-		protected virtual bool StartProcess( Process process )
-		{
-			return process.Start();
-		}
-
-		protected virtual void WaitForExit( Process process )
-		{
-			process.WaitForExit();
+            string args = "/v:" + settings.Computer.Computer;
+            if ( settings.Computer.AdminMode )
+                args += " /console /admin";
+            return args;
 		}
 	} // class MstscApp
-
-	public class MstscEventArgs : EventArgs
-	{
-		public MstscSettings Settings { get; private set; }
-
-		public MstscEventArgs( MstscSettings settings )
-		{
-			this.Settings = settings;
-		}
-	}
 }

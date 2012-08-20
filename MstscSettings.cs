@@ -4,19 +4,19 @@ using System.Text;
 
 namespace MillerX.RemoteDesktopPlus
 {
-	public enum AudioMode
+	enum AudioMode
 	{
 		ThisComputer = 0,
 		RemoteComputer = 1,
 		DoNotPlay = 2
 	}
 
-	public class MstscSettings : ICloneable
+	class MstscSettings : ICloneable
 	{
 		public MstscSettings( )
 		{
 			this.AudioMode = AudioMode.DoNotPlay;
-			this.SharedDrives = new List<char>();
+            this.SharedDrives = new char[0];
 		}
 
 		/// <summary>
@@ -32,7 +32,7 @@ namespace MillerX.RemoteDesktopPlus
 		/// <summary>
 		/// Letters of drives we want to be shared.
 		/// </summary>
-		public List<char> SharedDrives { get; private set; }
+		public char[] SharedDrives { get; set; }
 
 		public MstscSettings Clone( )
 		{

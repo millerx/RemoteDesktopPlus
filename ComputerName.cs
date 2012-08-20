@@ -7,7 +7,7 @@ namespace MillerX.RemoteDesktopPlus
 	/// <summary>
 	/// String pair for a computer and it's alias.
 	/// </summary>
-	public class ComputerName
+	class ComputerName
 	{
 		public const string IpAddressRegexPattern = @"\d+\.\d+\.\d+\.\d+";
 
@@ -79,37 +79,6 @@ namespace MillerX.RemoteDesktopPlus
 		public static bool IsIpAddress( string str )
 		{
 			return Regex.IsMatch( str, IpAddressRegexPattern );
-		}
-
-		public static ComputerName BuildComputerName( string computerName, string aliasName, RecentComputerList computerList )
-		{
-			ComputerName computer = computerList.Find( computerName );
-			if ( computer == null )
-			{
-				computer = new ComputerName( computerName, aliasName );
-
-				if ( computer.Alias != null )
-				{
-					// If the alias has an IP address then we probably mistyped and intended for the
-					// IP address to go in the computer combo box.
-					if ( ComputerName.IsIpAddress( computer.Alias ) )
-					{
-						computer = new ComputerName( computer.Alias, computer.Computer );
-					}
-				}
-			}
-			else if ( computer.EqualsAlias( computerName ) )
-			{
-				// There is some ambiguity in the UI.  If you have an alias in the Computer Name drop-down
-				// and a name in the Alias textbox then don't do anything with the Alias textbox.
-			}
-			else if ( aliasName != "" )
-			{
-				// We still set the alias in-case we are trying to change the computer name the alias is associated with.
-				computer.Alias = aliasName;
-			}
-
-			return computer;
 		}
 	}
 }

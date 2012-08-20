@@ -9,7 +9,7 @@ namespace MillerX.RemoteDesktopPlus
 	/// <summary>
 	/// Reads the list of computers we have seen before from the registry.
 	/// </summary>
-	public class RecentComputerList : ICollection<ComputerName>
+	class RecentComputerList : ICollection<ComputerName>
 	{
 		private List<ComputerName> m_list;
 

@@ -15,8 +15,23 @@
     <ApplicationIcon>Resources\RemoteDesktop.ico</ApplicationIcon>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
+    <OldToolsVersion>4.0</OldToolsVersion>
     <UpgradeBackupLocation />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -26,6 +41,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -34,6 +50,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -42,6 +59,7 @@
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AboutDialog.cs">
@@ -50,23 +68,18 @@
     <Compile Include="AboutDialog.Designer.cs">
       <DependentUpon>AboutDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="AdvancedTools.cs" />
-    <Compile Include="AudioDestinationSettingsPanel.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="AudioDestButton.cs">
+      <SubType>Component</SubType>
     </Compile>
-    <Compile Include="AudioDestinationSettingsPanel.designer.cs">
-      <DependentUpon>AudioDestinationSettingsPanel.cs</DependentUpon>
+    <Compile Include="ComputerComboBox.cs">
+      <SubType>Component</SubType>
     </Compile>
-    <Compile Include="CmdThread.cs" />
     <Compile Include="ComputerName.cs" />
-    <Compile Include="ComputerSettingsPanel.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="ComputerSettingsPanel.designer.cs">
-      <DependentUpon>ComputerSettingsPanel.cs</DependentUpon>
-    </Compile>
     <Compile Include="Config.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="LogoPictureBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="MstscConfig.cs" />
     <Compile Include="MstscSettings.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -86,31 +99,29 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ComputerListFile.cs" />
     <Compile Include="RemoteDesktopDialogPresenter.cs" />
-    <Compile Include="SharedDrivesSettingsPanel.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="SharedDrivesButton.cs">
+      <SubType>Component</SubType>
     </Compile>
-    <Compile Include="SharedDrivesSettingsPanel.designer.cs">
-      <DependentUpon>SharedDrivesSettingsPanel.cs</DependentUpon>
+    <Compile Include="SharedDrivesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedDrivesForm.Designer.cs">
+      <DependentUpon>SharedDrivesForm.cs</DependentUpon>
     </Compile>
     <Compile Include="ShellLibrary.cs" />
     <EmbeddedResource Include="AboutDialog.resx">
       <DependentUpon>AboutDialog.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="AudioDestinationSettingsPanel.resx">
-      <DependentUpon>AudioDestinationSettingsPanel.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ComputerSettingsPanel.resx">
-      <DependentUpon>ComputerSettingsPanel.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="RemoteDesktopDialog.resx">
       <DependentUpon>RemoteDesktopDialog.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="SharedDrivesSettingsPanel.resx">
-      <DependentUpon>SharedDrivesSettingsPanel.cs</DependentUpon>
+    <EmbeddedResource Include="SharedDrivesForm.resx">
+      <DependentUpon>SharedDrivesForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +141,28 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Resources\Drive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Audio_Here.png" />
+    <Content Include="Resources\Audio_None.png" />
+    <Content Include="Resources\Audio_Remote.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

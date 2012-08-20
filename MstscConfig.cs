@@ -11,8 +11,11 @@ namespace MillerX.RemoteDesktopPlus
 	/// of reading and writing the config file.  Derived classes decide which keys we change and
 	/// what we change them to.
 	/// </summary>
-	public class MstscConfig : IDisposable
+	class MstscConfig : IDisposable
 	{
+        public const char DrivePlugChar = '&';
+        public const char DriveAllChar = '*';
+
 		private static readonly System.Diagnostics.FileVersionInfo AppVersionInfo =
 			System.Diagnostics.FileVersionInfo.GetVersionInfo( MstscApp.MstscExecutablePath );
 
@@ -55,6 +58,13 @@ namespace MillerX.RemoteDesktopPlus
 			Update( filePath, dict );
 		}
 
+        public void Update( string[] inputLines, MstscSettings settings, Stream outputStream )
+        {
+            var dict = new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
+            SetUpdateDict( settings, dict );
+            Update( inputLines, dict, outputStream );
+        }
+
 		protected virtual void SetUpdateDict( MstscSettings settings, Dictionary<string, string> dict )
 		{
 		}
@@ -71,42 +81,54 @@ namespace MillerX.RemoteDesktopPlus
 			Update( filePath, dict );
 		}
 
+        public void ResetWindowsPos( string[] inputLines, Stream outputStream )
+        {
+            var dict = new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase );
+            SetResetWindowPosDict( dict );
+            Update( inputLines, dict, outputStream );
+        }
+
 		protected virtual void SetResetWindowPosDict( Dictionary<string, string> dict )
 		{
 		}
 
-		private void Update( string filePath, Dictionary<string,string> settingsDir )
-		{
-			string[] lines = File.ReadAllLines( filePath );
-			Dictionary<string, int> keysUpdated = new Dictionary<string, int>( StringComparer.OrdinalIgnoreCase );
+        private void Update( string filePath, Dictionary<string, string> settingsDir )
+        {
+            var lines = File.ReadAllLines( filePath );
+            // File.CreateText failed for Default.rdp
+            var stream = File.Open( filePath, FileMode.Truncate, FileAccess.Write );
+            Update( lines, settingsDir, stream );
+        }
 
-			// File.CreateText failed for Default.rdp
-			using ( StreamWriter writer = new StreamWriter(
-				File.Open( filePath, FileMode.Truncate, FileAccess.Write ), Encoding.Unicode ) )
-			{
-				foreach ( string line in lines )
-				{
-					string keyName = GetKeyName( line );
+        private void Update( string[] inputLines, Dictionary<string, string> settingsDir, Stream outputStream )
+        {
+            Dictionary<string, int> keysUpdated = new Dictionary<string, int>( StringComparer.OrdinalIgnoreCase );
 
-					if ( settingsDir.ContainsKey( keyName ) )
-					{
-						writer.WriteLine( keyName + settingsDir[keyName] );
-						keysUpdated.Add( keyName, 0 );
-					}
-					else
-					{
-						writer.WriteLine( line );
-					}
-				}
+            using ( StreamWriter writer = new StreamWriter( outputStream, Encoding.Unicode ) )
+            {
+                foreach ( string line in inputLines )
+                {
+                    string keyName = GetKeyName( line );
 
-				// If the key wasn't read than it needs to be added.
-				foreach ( string keyName in settingsDir.Keys )
-				{
-					if ( !keysUpdated.ContainsKey( keyName ) )
-						writer.WriteLine( keyName + settingsDir[keyName] );
-				}
-			}
-		}
+                    if ( settingsDir.ContainsKey( keyName ) )
+                    {
+                        writer.WriteLine( keyName + settingsDir[keyName] );
+                        keysUpdated.Add( keyName, 0 );
+                    }
+                    else
+                    {
+                        writer.WriteLine( line );
+                    }
+                }
+
+                // If the key wasn't read than it needs to be added.
+                foreach ( string keyName in settingsDir.Keys )
+                {
+                    if ( !keysUpdated.ContainsKey( keyName ) )
+                        writer.WriteLine( keyName + settingsDir[keyName] );
+                }
+            }
+        }
 
 		private static string GetKeyName( string line )
 		{
@@ -128,7 +150,7 @@ namespace MillerX.RemoteDesktopPlus
 	/// <summary>
 	/// Configuration settings from Remote Desktop when I started writing this application.
 	/// </summary>
-	public class XpMstscConfig : MstscConfig
+	class XpMstscConfig : MstscConfig
 	{
 		protected const string AudioModeKey = "audiomode:i:";
 		protected const string LastComputerKey = "full address:s:";
@@ -151,12 +173,23 @@ namespace MillerX.RemoteDesktopPlus
 			dict[SharedDrivesKey] = SerializeSharedDrives( settings.SharedDrives );
 		}
 
-		private static string SerializeSharedDrives( List<char> sharedDrives )
+		private static string SerializeSharedDrives( char[] sharedDrives )
 		{
-			StringBuilder valueString = new StringBuilder();
-			foreach ( char drive in sharedDrives )
+            // I'm not sure if 'All Drives' are supported in XP.
+            if ( sharedDrives.Length == 1 && sharedDrives[0] == DriveAllChar )
+            {
+                var drives = System.IO.Directory.GetLogicalDrives();
+                sharedDrives = new char[drives.Length];
+                for ( int i = 0; i < drives.Length; ++i )
+                    sharedDrives[i] = drives[i][0];
+            }
+
+            StringBuilder valueString = new StringBuilder();
+            foreach ( char drive in sharedDrives )
 			{
-				valueString.AppendFormat( "{0}:;", char.ToUpper( drive ) );
+                // 'Drives I plug in later' not supported in XP.
+                if ( drive != DrivePlugChar )
+				    valueString.AppendFormat( "{0}:;", char.ToUpper( drive ) );
 			}
 
 			return valueString.ToString();
@@ -164,19 +197,18 @@ namespace MillerX.RemoteDesktopPlus
 
 		protected override void SetResetWindowPosDict( Dictionary<string, string> dict )
 		{
-			// TODO:  Capture these values to the config.
 			dict[ScreenModeIdKey] = "2";
-			dict[DesktopWidthKey] = "1280";
-			dict[DesktopHeightKey] = "1024";
-			dict[SessionBbpKey] = "16";
-			dict[WindowPosKey] = "0,1,-1280,150,-80,950";
+            dict[DesktopWidthKey] = Config.ResetSize.Width.ToString();
+            dict[DesktopHeightKey] = Config.ResetSize.Height.ToString();
+            dict[SessionBbpKey] = Config.ResetBpp.ToString();
+            dict[WindowPosKey] = Config.ResetPosition;
 		}
 	}
 
 	/// <summary>
 	/// Remote Desktop changed sometime after Win7 (and ported back to Vista).
 	/// </summary>
-	public class Win7MstscConfig : XpMstscConfig
+	class Win7MstscConfig : XpMstscConfig
 	{
 		public Win7MstscConfig( IVolumeNameProvider nameProvider )
 		{
@@ -204,13 +236,23 @@ namespace MillerX.RemoteDesktopPlus
 			dict[SharedDrivesKey] = SerializeSharedDrives( settings.SharedDrives );
 		}
 
-		private string SerializeSharedDrives( List<char> sharedDrives )
+		private string SerializeSharedDrives( char[] sharedDrives )
 		{
 			StringBuilder valueString = new StringBuilder();
 			foreach ( char drive in sharedDrives )
 			{
-				valueString.Append( m_nameProvider.GetVolumeName( drive ) );
-				valueString.Append( ';' );
+                if ( drive == DriveAllChar )
+                {
+                    // 'All drives' should be the only character and no semi-colon is intentional.
+                    return "*";
+                }
+                else if ( drive == DrivePlugChar )
+                    valueString.Append( "DynamicDrives;" );
+                else
+                {
+                    valueString.Append( m_nameProvider.GetVolumeName( drive ) );
+                    valueString.Append( ';' );
+                }
 			}
 
 			return valueString.ToString();
