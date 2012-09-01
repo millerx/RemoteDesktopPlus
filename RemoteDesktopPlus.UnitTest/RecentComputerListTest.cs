@@ -780,17 +780,6 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 		}
 
 		/// <summary>
-		/// Tests the ComputerName.IsIpAddress method.
-		/// </summary>
-		[Test]
-		public void IsIpAddress( )
-		{
-			Assert.IsTrue( ComputerName.IsIpAddress( "1.1.1.1" ) );
-			Assert.IsFalse( ComputerName.IsIpAddress( "chrismillerpc" ) );
-			Assert.IsFalse( ComputerName.IsIpAddress( "" ) );
-		}
-
-		/// <summary>
 		/// Tests changing the max computer count of the list.
 		/// </summary>
 		[Test]
@@ -885,6 +874,46 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 				"ffff"
 			},
 			GetComputers( list ) );
+		}
+
+		/// <summary>
+		/// Tests that we have a max of 3 devlab servers in the list.  A devlab server is any
+		/// server name that ends in a number.
+		/// </summary>
+		[Test]
+		public void PushMaxDevlabServer()
+		{
+			RecentComputerList list = ListFromStrings(new string[]
+			{
+				"aaaa",
+				"server1",
+				"cccc",
+				"server2",
+				"eeee",
+				"server3",
+				"gggg",
+				"hhhh",
+				"iiii",
+				"jjjj"
+			});
+
+			list.Push(new ComputerName("server9", null));
+
+			// 3.3.3.3 is removed instead of jjjj
+			Assert.AreEqual(new string[]
+			{
+				"server9",
+				"aaaa",
+				"server1",
+				"cccc",
+				"server2",
+				"eeee",
+				"gggg",
+				"hhhh",
+				"iiii",
+				"jjjj"
+			},
+			GetComputers(list));
 		}
 	}
 }

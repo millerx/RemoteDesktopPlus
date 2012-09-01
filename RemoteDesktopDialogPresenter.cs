@@ -64,21 +64,21 @@ namespace MillerX.RemoteDesktopPlus
         public ComputerName BuildComputerName( string computerName, string aliasName )
         {
             ComputerName computer = m_RecentComputerList.Find( computerName );
-            if ( computer == null )
+            if (computer == null)
             {
                 computer = new ComputerName( computerName, aliasName );
 
                 // If the alias has an IP address then we probably mistyped and intended for the
                 // IP address to go in the computer combo box.
-                if ( computer.Alias != null && ComputerName.IsIpAddress( computer.Alias ) )
+                if (computer.Alias != null && ComputerName.IsIpAddress( computer.Alias ))
                     computer = new ComputerName( computer.Alias, computer.Computer );
             }
-            else if ( computer.EqualsAlias( computerName ) )
+            else if (computer.EqualsAlias( computerName ))
             {
                 // There is some ambiguity in the UI.  If you have an alias in the Computer Name drop-down
                 // and a name in the Alias textbox then don't do anything with the Alias textbox.
             }
-            else if ( aliasName != "" )
+            else if (aliasName != "")
             {
                 // We still set the alias in-case we are trying to change the computer name the alias is associated with.
                 computer.Alias = aliasName;

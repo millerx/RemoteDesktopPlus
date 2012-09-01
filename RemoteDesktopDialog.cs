@@ -154,12 +154,12 @@ namespace MillerX.RemoteDesktopPlus
 			m_Timer.Enabled = false;
 		}
 
-		private void m_ctxAdvEditComputerList_Click( object sender, EventArgs e )
+		private void m_ctxEditComputerList_Click( object sender, EventArgs e )
 		{
             ThreadPool.QueueUserWorkItem( (o) => m_Presenter.EditComputerList() );
 		}
 
-		private void m_ctxAdvResetWindowPos_Click( object sender, EventArgs e )
+		private void m_ctxResetWindowPos_Click( object sender, EventArgs e )
 		{
             m_Presenter.ResetRDWindowPos();
 		}

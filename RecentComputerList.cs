@@ -89,38 +89,62 @@ namespace MillerX.RemoteDesktopPlus
 			m_list = newList;
 		}
 
+		class ServerRegex
+		{
+			public int matchCount = 0;
+			public int lastMatchIndex = -1;
+			public Regex regex;
+
+			public ServerRegex( string pattern )
+			{
+				regex = new Regex( pattern );
+			}
+		}
+
 		/// <summary>
 		/// Gets the index of the item that should be removed during Push().  Returns m_List.Count
 		/// if nothing should be removed.
 		/// </summary>
 		private int GetRemoveIndex( ComputerName newComputer )
 		{
-			Regex regex = new Regex( ComputerName.IpAddressRegexPattern );
-			int ipCount = 0;
-			int lastIpIndex = -1;
+			var regexs = new []
+			{
+				new ServerRegex( ComputerName.IpAddressRegexPattern ),
+				new ServerRegex( ComputerName.DevlabServerRegexPattern ),
+			};
 
-			if ( regex.IsMatch( newComputer.Computer ) )
-				++ipCount;
+			foreach (var r in regexs)
+			{
+				if (r.regex.IsMatch( newComputer.Computer ))
+					++r.matchCount;
+			}
 
-			for ( int i = 0; i < m_list.Count; ++i )
+			for (int i = 0; i < m_list.Count; ++i)
 			{
 				// Avoid duplicates
-				if ( newComputer.EqualsComputer( m_list[i].Computer ) )
+				if (newComputer.EqualsComputer( m_list[i].Computer ))
 					return i;
 
-				if ( regex.IsMatch( m_list[i].Computer ) )
+				foreach (var r in regexs)
 				{
-					++ipCount;
-					lastIpIndex = i;
+					if (r.regex.IsMatch( m_list[i].Computer ))
+					{
+						++r.matchCount;
+						r.lastMatchIndex = i;
+					}
 				}
 			}
 
-			if ( m_list.Count < MaxComputerCount )
+			if (m_list.Count < MaxComputerCount)
 				return m_list.Count; // Don't remove anything
-			if ( ipCount > this.MaxIpAddressCount )
-				return lastIpIndex;
-			else
-				return m_list.Count - 1;
+
+			foreach (var r in regexs)
+			{
+				if (r.matchCount > this.MaxIpAddressCount)
+					return r.lastMatchIndex;
+			}
+
+			return m_list.Count - 1;
 		}
 
 		/// <summary>

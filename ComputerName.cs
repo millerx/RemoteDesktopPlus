@@ -10,6 +10,7 @@ namespace MillerX.RemoteDesktopPlus
 	class ComputerName
 	{
 		public const string IpAddressRegexPattern = @"\d+\.\d+\.\d+\.\d+";
+		public const string DevlabServerRegexPattern = @"[a-zA-Z]+\d+";
 
 		/// <summary>
 		/// Name of the computer or an IP address.
@@ -79,6 +80,11 @@ namespace MillerX.RemoteDesktopPlus
 		public static bool IsIpAddress( string str )
 		{
 			return Regex.IsMatch( str, IpAddressRegexPattern );
+		}
+
+		public static bool IsDevlabServer( string str )
+		{
+			return Regex.IsMatch( str, DevlabServerRegexPattern );
 		}
 	}
 }

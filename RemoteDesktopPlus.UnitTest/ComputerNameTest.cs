@@ -55,6 +55,17 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
             Assert.IsFalse( ComputerName.IsIpAddress( "computer" ) );
             Assert.IsFalse( ComputerName.IsIpAddress( "1.1" ) );
             Assert.IsFalse( ComputerName.IsIpAddress( "1.1.1.a" ) );
-        }
+			Assert.IsFalse( ComputerName.IsIpAddress( "" ) );
+		}
+
+		[Test]
+		public void IsDevlabServer( )
+		{
+			Assert.IsFalse( ComputerName.IsDevlabServer( "computer" ) );
+			Assert.IsTrue( ComputerName.IsDevlabServer( "clay1" ) );
+			Assert.IsTrue( ComputerName.IsDevlabServer( "CLAY1" ) );
+			Assert.IsFalse( ComputerName.IsDevlabServer( "" ) );
+			Assert.IsFalse( ComputerName.IsDevlabServer( "1.1.1.1" ) );
+		}
 	}
 }

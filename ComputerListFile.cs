@@ -10,7 +10,11 @@ namespace MillerX.RemoteDesktopPlus
 	{
 		public static string GetComputerListFilePath( )
 		{
+#if DEBUG
+			return @".\computers.txt";
+#else
 			return Path.Combine( Program.LocalAppPath, "computers.txt" );
+#endif
 		}
 
 		public void Write( TextWriter writer, RecentComputerList computers )
