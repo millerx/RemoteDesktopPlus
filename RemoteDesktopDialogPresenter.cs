@@ -67,11 +67,6 @@ namespace MillerX.RemoteDesktopPlus
             if (computer == null)
             {
                 computer = new ComputerName( computerName, aliasName );
-
-                // If the alias has an IP address then we probably mistyped and intended for the
-                // IP address to go in the computer combo box.
-                if (computer.Alias != null && ComputerName.IsIpAddress( computer.Alias ))
-                    computer = new ComputerName( computer.Alias, computer.Computer );
             }
             else if (computer.EqualsAlias( computerName ))
             {

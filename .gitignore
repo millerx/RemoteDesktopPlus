@@ -1,5 +1,6 @@
 *.suo
 *.csproj.user
+backup.7z
 bin/Debug/*
 obj/Debug/*
 RemoteDesktopPlus.UnitTest/bin/Debug/*

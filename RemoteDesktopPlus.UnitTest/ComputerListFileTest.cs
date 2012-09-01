@@ -5,6 +5,8 @@ using System.Linq;
 using NUnit.Framework;
 using MillerX.RemoteDesktopPlus;
 
+// TODO:  Look for calls to the serializer that are reading from disk.
+
 namespace MillerX.RemoteDesktopPlus.UnitTest
 {
 	[TestFixture]

@@ -76,15 +76,5 @@ namespace MillerX.RemoteDesktopPlus
 		{
 			return this.Alias ?? this.Computer;
 		}
-
-		public static bool IsIpAddress( string str )
-		{
-			return Regex.IsMatch( str, IpAddressRegexPattern );
-		}
-
-		public static bool IsDevlabServer( string str )
-		{
-			return Regex.IsMatch( str, DevlabServerRegexPattern );
-		}
 	}
 }

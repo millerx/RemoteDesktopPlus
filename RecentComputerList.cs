@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
+// TODO:  Use config globally.  Reset it as needed.
+
 namespace MillerX.RemoteDesktopPlus
 {
 	/// <summary>
@@ -30,15 +32,16 @@ namespace MillerX.RemoteDesktopPlus
 		{
 			this.MaxComputerCount = maxComputers;
 			this.MaxMatchCount = maxIpAddresses;
+
 			m_list = new List<ComputerName>( this.MaxComputerCount );
 		}
 
-		public RecentComputerList( RecentComputerList computers )
+		public RecentComputerList( RecentComputerList rcl )
 		{
-			Initialize( computers.MaxComputerCount, computers.MaxMatchCount );
+			Initialize( rcl.MaxComputerCount, rcl.MaxMatchCount );
 
 			// Do a deep-copy of the elements.
-			foreach ( ComputerName name in computers )
+			foreach (ComputerName name in rcl)
 			{
 				m_list.Add( new ComputerName( name.Computer, name.Alias, name.AdminMode ) );
 			}
@@ -50,7 +53,7 @@ namespace MillerX.RemoteDesktopPlus
 		/// </summary>
 		public bool Add( ComputerName computer )
 		{
-			if ( m_list.Count >= MaxComputerCount )
+			if (m_list.Count >= MaxComputerCount)
 				return false;
 
 			m_list.Add( computer );
@@ -73,14 +76,14 @@ namespace MillerX.RemoteDesktopPlus
 			List<ComputerName> newList = new List<ComputerName>( MaxComputerCount );
 			newList.Add( computer );
 
-			for ( int i = 0; i < m_list.Count; ++i )
+			for (int i = 0; i < m_list.Count; ++i)
 			{
 				// Don't add the item at removeIndex
-				if ( i == removeIndex )
+				if (i == removeIndex)
 					continue;
 
 				// Remove duplicate alias
-				if ( m_list[i].EqualsAlias( computer.Alias ) )
+				if (m_list[i].EqualsAlias( computer.Alias ))
 					m_list[i].Alias = null;
 
 				newList.Add( m_list[i] );
@@ -107,11 +110,7 @@ namespace MillerX.RemoteDesktopPlus
 		/// </summary>
 		private int GetRemoveIndex( ComputerName newComputer )
 		{
-			var regexs = new []
-			{
-				new ServerRegex( ComputerName.IpAddressRegexPattern ),
-				new ServerRegex( ComputerName.DevlabServerRegexPattern ),
-			};
+			var regexs = (from r in Config.Regex select new ServerRegex(r)).ToArray();
 
 			foreach (var r in regexs)
 			{
@@ -153,15 +152,15 @@ namespace MillerX.RemoteDesktopPlus
 		/// </summary>
 		public ComputerName Find( string name )
 		{
-			foreach ( ComputerName computer in m_list )
+			foreach (ComputerName computer in m_list)
 			{
-				if ( computer.EqualsAlias( name ) )
+				if (computer.EqualsAlias( name ))
 					return computer;
 			}
 
-			foreach ( ComputerName computer in m_list )
+			foreach (ComputerName computer in m_list)
 			{
-				if ( computer.EqualsComputer( name ) )
+				if (computer.EqualsComputer( name ))
 					return computer;
 			}
 

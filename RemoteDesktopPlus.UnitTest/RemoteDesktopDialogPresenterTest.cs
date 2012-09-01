@@ -52,22 +52,5 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
             Assert.AreEqual( new ComputerName( "1.1.1.1", "MyAlias" ),
                 presenter.BuildComputerName( "MyAlias", "OtherAlias" ) );
         }
-
-        /// <summary>
-        /// Tests that if we put an IP address as an alias, RDP assumes user error and flips the computer name and alias.
-        /// </summary>
-        [Test]
-        public void FlipComputerNameAndAlias( )
-        {
-            var presenter = new TestRemoteDesktopDialogPresenter();
-
-            // 1.1.1.1 was intended to be the computer name but we mistyped.
-            Assert.AreEqual( new ComputerName( "1.1.1.1", "alias" ),
-                presenter.BuildComputerName( "alias", "1.1.1.1" ) );
-
-            // Do we handle not having an alias.
-            Assert.AreEqual( new ComputerName( "chrismillerpc", null ),
-                presenter.BuildComputerName( "chrismillerpc", "" ) );
-        }
     } // RemoteDesktopDialogPresenterTest
 } // namespace MillerX.RemoteDesktopPlus.UnitTest
