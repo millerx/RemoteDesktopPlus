@@ -10,7 +10,7 @@ namespace MillerX.RemoteDesktopPlus
 	static class Config
 	{
 		public static int MaxComputerCount = 128;
-		public static int MaxIpAddressCount = 5;
+		public static int MaxMatchCount = 5;
 		public static int MaxComboItems = 10;
         public static Size ResetSize = new Size( 1280, 1024 );
         public static string ResetPosition = "0,1,-1280,150,-80,950";

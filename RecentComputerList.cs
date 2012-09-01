@@ -14,10 +14,10 @@ namespace MillerX.RemoteDesktopPlus
 		private List<ComputerName> m_list;
 
 		public int MaxComputerCount { get; set; }
-		public int MaxIpAddressCount { get; set; }
+		public int MaxMatchCount { get; set; }
 
 		public RecentComputerList( )
-			: this( Config.MaxComputerCount, Config.MaxIpAddressCount )
+			: this( Config.MaxComputerCount, Config.MaxMatchCount )
 		{
 		}
 
@@ -29,13 +29,13 @@ namespace MillerX.RemoteDesktopPlus
 		private void Initialize( int maxComputers, int maxIpAddresses )
 		{
 			this.MaxComputerCount = maxComputers;
-			this.MaxIpAddressCount = maxIpAddresses;
+			this.MaxMatchCount = maxIpAddresses;
 			m_list = new List<ComputerName>( this.MaxComputerCount );
 		}
 
 		public RecentComputerList( RecentComputerList computers )
 		{
-			Initialize( computers.MaxComputerCount, computers.MaxIpAddressCount );
+			Initialize( computers.MaxComputerCount, computers.MaxMatchCount );
 
 			// Do a deep-copy of the elements.
 			foreach ( ComputerName name in computers )
@@ -140,7 +140,7 @@ namespace MillerX.RemoteDesktopPlus
 
 			foreach (var r in regexs)
 			{
-				if (r.matchCount > this.MaxIpAddressCount)
+				if (r.matchCount > this.MaxMatchCount)
 					return r.lastMatchIndex;
 			}
 

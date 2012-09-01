@@ -41,7 +41,7 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 		public void TestFixtureSetUp( )
 		{
 			Config.MaxComputerCount = 10;
-			Config.MaxIpAddressCount = 3;
+			Config.MaxMatchCount = 3;
 		}
 
 		/// <summary>
@@ -835,7 +835,7 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 				"jjjj"
 			} );
 
-			list.MaxIpAddressCount = 2;
+			list.MaxMatchCount = 2;
 			list.Push( new ComputerName( "1.1.1.1", null ) );
 			list.Push( new ComputerName( "2.2.2.2", null ) );
 			list.Push( new ComputerName( "3.3.3.3", null ) );
@@ -855,7 +855,7 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 			},
 			GetComputers( list ) );
 
-			list.MaxIpAddressCount = 4;
+			list.MaxMatchCount = 4;
 			list.Push( new ComputerName( "4.4.4.4", null ) );
 			list.Push( new ComputerName( "5.5.5.5", null ) );
 			list.Push( new ComputerName( "6.6.6.6", null ) );

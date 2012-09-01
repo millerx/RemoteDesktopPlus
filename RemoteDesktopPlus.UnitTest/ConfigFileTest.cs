@@ -15,7 +15,7 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 		{
 			string inputStr =
 				"MaxComputerCount:1\r\n" +
-				"MaxIpAddressCount:2\r\n" +
+				"MaxMatchCount:2\r\n" +
 				"MaxComboItems:3\r\n";
 
 			using ( StringReader reader = new StringReader( inputStr ) )
@@ -25,7 +25,7 @@ namespace MillerX.RemoteDesktopPlus.UnitTest
 			}
 
 			Assert.AreEqual( 1, Config.MaxComputerCount );
-			Assert.AreEqual( 2, Config.MaxIpAddressCount );
+			Assert.AreEqual( 2, Config.MaxMatchCount );
 			Assert.AreEqual( 3, Config.MaxComboItems );
 		}
 	}
